@@ -1,4 +1,4 @@
-specVersion: 0.0.1
+specVersion: 0.0.4
 schema:
   file: ./schema.graphql
 dataSources:
@@ -8,9 +8,10 @@ dataSources:
     source:
       address: "0x680A025Da7b1be2c204D7745e809919bCE074026"
       abi: UniswapV2Pair
+      startBlock : 10794350
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - Approval
@@ -36,3 +37,29 @@ dataSources:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
       file: ./src/uniswap-v-2-pair.ts
+  - kind: ethereum/contract
+      name: UniswapV2Factory
+      network: mainnet
+      source:
+        address: "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac"
+        abi: UniswapV2Factory
+        startBlock: 10794228
+      mapping:
+        kind: ethereum/events
+        apiVersion: 0.0.6
+        language: wasm/assemblyscript
+        entities:
+          - Block
+          - Account
+          - Token
+          - Market
+          - Pair
+        abis:
+          - name: ERC20
+            file: ./abis/IERC20.json
+          - name: UniswapV2Factory
+            file: ./abis/IUniswapV2Factory.json
+        eventHandlers:
+          - event: PairCreated(indexed address,indexed address,address,uint256)
+            handler: handlePairCreated
+        file: ./src/uniswapV2Factory.ts
