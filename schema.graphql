@@ -1,3 +1,5 @@
+# Common entities for all protocols
+
 enum Blockchain {
 	ETHEREUM
 	BSC
@@ -16,6 +18,17 @@ enum TokenStandard {
 
 enum ProtocolName {
 	UNISWAP_V2
+	SUSHISWAP
+	QUICKSWAP
+	TRISOLARIS
+	APESWAP
+	BISWAP
+	COMETH
+	PANGOLIN
+	TRADER_JOE
+	WANNASWAP
+	PANCAKESWAP
+	AURORASWAP
 }
 
 enum ProtocolType {
@@ -65,6 +78,10 @@ type Market @entity {
 	account: Account!
 	protocolName: ProtocolName!
 	protocolType: ProtocolType!
+	# Generally protocols accept one or multiple tokens and mint tokens to the depositor to track ownership
+	# Some protocols reward DAO tokens or other incentivisation tokens to holders of LP tokens
+	# Some protocols don't mint any tokens to track ownership, in that case outputToken is null
+	# and inputToken balances are used to calculate returns
 	inputTokens: [Token!]! # Tokens that need to be deposited to take a position in protocol
 	outputToken: Token # Token that is minted to track ownership of position in protocol
 	rewardTokens: [Token!] # Aditional tokens that are given as reward for position in a protocol
@@ -155,6 +172,62 @@ type PositionSnapshot @entity {
 	rewardTokenBalances: [String!]! # TokenBalance string format
 }
 
+# END - Common entities for all protocols
+
+# UniswapV2 protocol entities
+
+# Created on PairCreated event on UniswapV2Factory.sol
+# feeTo is not part of Pair contract. We need to fetch it from factory contract
+type Pair @entity {
+	id: ID! # {pairAddress}
+	factory: Account!
+	token0: Token!
+	token1: Token!
+	reserve0: BigInt!
+	reserve1: BigInt!
+	totalSupply: BigInt!
+	blockNumber: BigInt!
+	timestamp: BigInt!
+	lastIncompleteBurn: Burn
+}
+
+type AccountLiquidity @entity {
+	id: ID! # {pairAddress}{accoutnAddress}
+	pair: Pair!
+	account: Account!
+	balance: BigInt!
+}
+
+type Mint @entity {
+	id: ID! # {pairAddress}{trasactionHash}
+	pair: Pair
+	from: Account
+	to: Account
+	liquityAmount: BigInt
+	amount0: BigInt
+	amount1: BigInt
+	transferEventApplied: Boolean!
+	syncEventApplied: Boolean!
+	mintEventApplied: Boolean!
+}
+
+type Burn @entity {
+	id: ID! # {pairAddress}{trasactionHash}
+	pair: Pair
+	from: Account
+	to: Account
+	liquityAmount: BigInt
+	amount0: BigInt
+	amount1: BigInt
+	transferToPairEventApplied: Boolean!
+	transferToZeroEventApplied: Boolean!
+	syncEventApplied: Boolean!
+	burnEventApplied: Boolean!
+}
+
+# END - UniswapV2 protocol entities
+
+# Volumetric daily data
 type MarketDayData @entity {
 	" marketAddress + dayId "
 	id: ID!
@@ -189,7 +262,7 @@ type MarketDayData @entity {
 	" amount of LP tokens burned this day "
 	outputTokenDailyOutflowVolume: BigInt!
 
-	" fee in base points, applied to swap-in amount, taken by protocol "
+	" fee percentage, applied to swap-in amount, taken by protocol "
 	protocolFee: BigInt!
 
 	" amount of fees generated this day, per token "
